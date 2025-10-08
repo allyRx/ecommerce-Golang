@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/allyRx/ecommerce-Golang/database"
 	"github.com/allyRx/ecommerce-Golang/models"
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 
@@ -58,7 +62,7 @@ func Login(c fiber.Ctx) error {
 			"message": "User not found",
 		})
 	}
-
+     
 	//  Vérifier le mot de passe
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data.Password)); err != nil {
 		return c.Status(400).JSON(fiber.Map{
@@ -66,9 +70,18 @@ func Login(c fiber.Ctx) error {
 		})
 	}
 
-	//  Réponse (ne jamais renvoyer le hash)
-	return c.JSON(fiber.Map{
-		"message" : "Login Successfully" ,
-		"User" : user,
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer: strconv.Itoa(int(user.Id)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 	})
+
+	token , err := claims.SignedString([]byte("secret"))
+
+
+	if err != nil {
+		return  c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	//  Réponse (ne jamais renvoyer le hash)
+	return c.JSON(token)
 }
