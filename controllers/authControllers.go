@@ -8,7 +8,6 @@ import (
 )
 
 
-
 func Register(c fiber.Ctx) error {
   
 	data := new(models.Customer)
@@ -39,5 +38,37 @@ func Register(c fiber.Ctx) error {
 	return c.Status(201).JSON(fiber.Map{
 		"message" : "User create succesfully",
 		"customers" : data,
+	})
+}
+
+func Login(c fiber.Ctx) error {
+	var data models.LoginInput
+
+	//on recupere les donnes via de l'user et on remplis le varibale data 
+	if err := c.Bind().Body(&data); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	// Rechercher l'utilisateur
+	var user models.Customer
+	if err := database.DB.Where("email = ?", data.Email).First(&user).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"message": "User not found",
+		})
+	}
+
+	//  Vérifier le mot de passe
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data.Password)); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "Password incorrect",
+		})
+	}
+
+	//  Réponse (ne jamais renvoyer le hash)
+	return c.JSON(fiber.Map{
+		"message" : "Login Successfully" ,
+		"User" : user,
 	})
 }
