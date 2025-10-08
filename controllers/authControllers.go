@@ -67,5 +67,8 @@ func Login(c fiber.Ctx) error {
 	}
 
 	//  Réponse (ne jamais renvoyer le hash)
-	return c.JSON(user)
+	return c.JSON(fiber.Map{
+		"message" : "Login Successfully" ,
+		"User" : user,
+	})
 }
