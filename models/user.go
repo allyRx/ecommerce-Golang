@@ -1,5 +1,6 @@
 package models
 
+
 type Customer struct {
 	Id		  uint
     Firstname string `gorm:"not null"         json:"firstname"`
@@ -8,3 +9,8 @@ type Customer struct {
     Password  string `gorm:"not null"         json:"password"`
 }
 
+
+type LoginInput struct{
+    Email     string   `json:"email"`
+    Password  string    `json:"password"`
+}
