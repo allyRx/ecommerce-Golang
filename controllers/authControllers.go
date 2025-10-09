@@ -3,12 +3,11 @@ package controllers
 import (
 	"strconv"
 	"time"
-
 	"github.com/allyRx/ecommerce-Golang/database"
 	"github.com/allyRx/ecommerce-Golang/models"
 	"github.com/gofiber/fiber/v3"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 
@@ -97,4 +96,53 @@ func Login(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message" : "succes",
 	})
+}
+
+	type Claims struct {
+		jwt.StandardClaims
+	}
+
+func User(c fiber.Ctx) error{
+	
+	cookie := c.Cookies("jwt") 
+
+	token , err := jwt.ParseWithClaims(cookie , &Claims{}, func(t *jwt.Token) (interface{}, error) {
+		return []byte("secret") , nil
+	} )
+
+	if err != nil || !token.Valid {
+		c.Status(fiber.StatusUnauthorized)
+		return  c.JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	claims := token.Claims.(*Claims)
+
+	id_user := claims.Issuer
+	
+	var user models.Customer
+
+	if err := database.DB.Where("id = ?" , id_user).First(&user);err != nil{
+		c.Status(404).JSON(fiber.Map{
+			"messge" : "User not found",
+		})
+	}
+
+	return  c.JSON(user)
+}
+
+func Logout(c fiber.Ctx) error{
+	cookies := fiber.Cookie{
+		Name: "jwt",
+		Value: "",
+		Expires: time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookies)
+
+return c.JSON(fiber.Map{
+	"message" : "Logout",
+})
 }
