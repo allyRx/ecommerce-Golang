@@ -72,6 +72,7 @@ func Login(c fiber.Ctx) error {
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer: strconv.Itoa(int(user.Id)),
+	
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 	})
 
@@ -82,6 +83,18 @@ func Login(c fiber.Ctx) error {
 		return  c.SendStatus(fiber.StatusInternalServerError)
 	}
 
+
+	cookies := fiber.Cookie{
+		Name: "jwt",
+		Value: token,
+		Expires: time.Now().Add(time.Hour * 24),
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookies)
+
 	//  Réponse (ne jamais renvoyer le hash)
-	return c.JSON(token)
+	return c.JSON(fiber.Map{
+		"message" : "succes",
+	})
 }
